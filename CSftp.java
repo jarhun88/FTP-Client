@@ -67,6 +67,10 @@ public class CSftp {
         try {
             String response = in.readLine();
             System.out.println("<-- " + response);
+            // Check if user is logged in
+            if (response.split(" ")[0].equals("530")) {
+                return;
+            }
             out.print("TYPE I" + "\r\n");
             out.flush();
             response = response.substring(response.indexOf("(") + 1);
@@ -76,7 +80,6 @@ public class CSftp {
             int port2 = Integer.parseInt(response.split("\\.")[5]);
             int port = port1 * 256 + port2;
             String ip = response.split("\\.")[0] + "." + response.split("\\.")[1] + "." + response.split("\\.")[2] + "." + response.split("\\.")[3]; 
-            
             Socket secondClientSocket = new Socket();
             secondClientSocket.connect(new InetSocketAddress(ip, port), 10000);
             BufferedReader secondReader = new BufferedReader(new InputStreamReader(secondClientSocket.getInputStream()));
@@ -85,16 +88,22 @@ public class CSftp {
             System.out.println("<-- " + in.readLine());  
             response = in.readLine();
             System.out.println("<-- " + response);  
-            if (!response.split(" ")[0].equals("550"))  {
+            
+            try {
+                if (!response.split(" ")[0].equals("550"))  {
 
-                Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(remote), "utf-8"));
-                while ((response = secondReader.readLine()) != null) {
-                    writer.write(response);
-                }   
-                writer.close();
-                System.out.println("<-- " + in.readLine());
+                    Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(remote), "utf-8"));
+                    while ((response = secondReader.readLine()) != null) {
+                        writer.write(response);
+                    }   
+                    writer.close();
+                    System.out.println("<-- " + in.readLine());
+                }
+                secondClientSocket.close();
+            } catch (IOException e) {
+                // Error while attempting to read from/write to data transfer connection, close connection
+                System.out.println("0x3A7 Data transfer connection I/O error, closing data connection");
             }
-            secondClientSocket.close();
         
         } catch (IOException e) {
             System.out.println("0xFFFD: Control connection I/O error, closing control connection.");
@@ -196,10 +205,7 @@ public class CSftp {
             String line = in.readLine();
             System.out.println("<-- " + line);
 
-            // Check if user is logged in
-            if (line.split(" ")[0].equals("530")) {
-                return;
-            }
+              
 
             // Parse IP and port number of connection
             int startIndex = line.indexOf("(");
