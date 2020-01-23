@@ -61,7 +61,7 @@ public class CSftp {
     }
 
     public static void get(String remote){
-        System.out.println("--> GET " + remote);
+        System.out.println("--> PASV");
         out.print("PASV" + "\r\n");
         out.flush();
         try {
@@ -72,7 +72,9 @@ public class CSftp {
                 return;
             }
             out.print("TYPE I" + "\r\n");
+            System.out.println("--> TYPE I");
             out.flush();
+            System.out.println("<-- " + in.readLine());  
             response = response.substring(response.indexOf("(") + 1);
             response = response.substring(0, response.indexOf(")"));
             response = response.replace(',', '.');
@@ -84,8 +86,8 @@ public class CSftp {
             secondClientSocket.connect(new InetSocketAddress(ip, port), 10000);
             BufferedReader secondReader = new BufferedReader(new InputStreamReader(secondClientSocket.getInputStream()));
             out.print("RETR " + remote + "\r\n");
+            System.out.println("--> RETR " + remote);
             out.flush();
-            System.out.println("<-- " + in.readLine());  
             response = in.readLine();
             System.out.println("<-- " + response);  
             
