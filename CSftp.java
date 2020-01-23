@@ -1,6 +1,9 @@
-
-import java.lang.System;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 
 //
 // This is an implementation of a simplified version of a command 
@@ -11,6 +14,9 @@ import java.io.*;
 public class CSftp {
     static final int MAX_LEN = 255;
     static final int ARG_CNT = 2;
+    static Socket ClientSocket;
+    static BufferedReader in;
+    static PrintWriter out;
 
     public static void user(String username){
         System.out.println("Client username: " + username);
@@ -47,6 +53,43 @@ public class CSftp {
         // TODO: implement
     }
 
+    public static void openConnection(String[] args) {
+        String hostname;
+        int portNumber;
+
+        // If there are not 2 arguments
+        if (args.length != ARG_CNT) {
+            if (args.length != 1){
+                // If there is not 1 argument either, exit
+                System.out.print("Usage: cmd ServerAddress ServerPort\n");
+                return;
+            } else {
+                // If there is 1 argument, that argument is host name and port number = 21
+                hostname = args[0];
+                portNumber = 21;
+            }
+        } else {
+            // If there are 2 arguments, first argument is host name and second is port number.
+            try {
+                hostname = args[0];
+                portNumber = Integer.parseInt(args[1]);
+            } catch (NumberFormatException e) {
+                // Ensures port number is an int
+                System.out.println("Usage: port number must be an integer");
+                return;
+            }
+        }
+
+        try {
+            ClientSocket = new Socket();
+            ClientSocket.connect(new InetSocketAddress(hostname, portNumber), 20000);
+            in = new BufferedReader(new InputStreamReader(ClientSocket.getInputStream()));
+            out = new PrintWriter(ClientSocket.getOutputStream(), true);
+        } catch (IOException e) {
+            System.out.println("0xFFFC Control connection to " + hostname + " on port " + portNumber + " failed to open");
+        }
+    }
+
     public static void main(String[] args) {
         byte cmdString[] = new byte[MAX_LEN];
 
@@ -54,10 +97,7 @@ public class CSftp {
         // If the arguments are invalid or there aren't enough of them
         // then exit.
 
-        if (args.length != ARG_CNT) {
-            System.out.print("Usage: cmd ServerAddress ServerPort\n");
-            return;
-        }
+        openConnection(args);
 
         try {
             for (int len = 1; len > 0; ) {
