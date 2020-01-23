@@ -1,11 +1,7 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.InetSocketAddress;
-import java.net.Socket;
+import java.net.*;
+import java.util.*;
+import java.io.*;
 import java.nio.channels.IllegalBlockingModeException;
-import java.util.StringTokenizer;
 
 //
 // This is an implementation of a simplified version of a command 
@@ -65,8 +61,48 @@ public class CSftp {
     }
 
     public static void get(String remote){
-        System.out.println("Retrieving file " + remote + "...");
-        // TODO: implement
+        System.out.println("--> GET " + remote);
+        out.print("PASV" + "\r\n");
+        out.flush();
+        try {
+            String response = in.readLine();
+            System.out.println("<-- " + response);
+            out.print("TYPE I" + "\r\n");
+            out.flush();
+            response = response.substring(response.indexOf("(") + 1);
+            response = response.substring(0, response.indexOf(")"));
+            response = response.replace(',', '.');
+            int port1 = Integer.parseInt(response.split("\\.")[4]);
+            int port2 = Integer.parseInt(response.split("\\.")[5]);
+            int port = port1 * 256 + port2;
+            String ip = response.split("\\.")[0] + "." + response.split("\\.")[1] + "." + response.split("\\.")[2] + "." + response.split("\\.")[3]; 
+            
+            Socket secondClientSocket = new Socket();
+            secondClientSocket.connect(new InetSocketAddress(ip, port), 10000);
+            BufferedReader secondReader = new BufferedReader(new InputStreamReader(secondClientSocket.getInputStream()));
+            out.print("RETR " + remote + "\r\n");
+            out.flush();
+            System.out.println("<-- " + in.readLine());  
+            response = in.readLine();
+            System.out.println("<-- " + response);  
+            if (!response.split(" ")[0].equals("550"))  {
+
+                Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(remote), "utf-8"));
+                while ((response = secondReader.readLine()) != null) {
+                    writer.write(response);
+                }   
+                writer.close();
+                System.out.println("<-- " + in.readLine());
+            }
+            secondClientSocket.close();
+        
+        } catch (IOException e) {
+            System.out.println("0xFFFD: Control connection I/O error, closing control connection.");
+            closeConnection();
+        } catch (Error e) {
+            System.out.println("0xFFFF: Processing error. " + e.getMessage());
+        }
+
     }
 
     private static void makeFile(String fileName) {
