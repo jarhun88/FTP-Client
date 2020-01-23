@@ -1,6 +1,9 @@
-
-import java.lang.System;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 
 //
 // This is an implementation of a simplified version of a command 
@@ -11,6 +14,81 @@ import java.io.*;
 public class CSftp {
     static final int MAX_LEN = 255;
     static final int ARG_CNT = 2;
+    static Socket ClientSocket;
+    static BufferedReader in;
+    static PrintWriter out;
+
+    public static void user(String username){
+        System.out.println("Client username: " + username);
+        // TODO: implement
+    }
+
+    public static void pw(String password){
+        System.out.println("Client password: " + password);
+        // TODO: implement
+    }
+
+    public static void get(String remote){
+        System.out.println("Retrieving file " + remote + "...");
+        // TODO: implement
+    }
+
+    public static void cd(String directory){
+        System.out.println("Switching to directory: " + directory + "...");
+        // TODO: implement
+    }
+
+    public static void quit(){
+        System.out.println("Good bye.");
+        // TODO: implement
+    }
+
+    public static void features(){
+        System.out.println("Loading features...");
+        // TODO: implement
+    }
+
+    public static void dir(){
+        System.out.println("Retrieving file list...");
+        // TODO: implement
+    }
+
+    public static void openConnection(String[] args) {
+        String hostname;
+        int portNumber;
+
+        // If there are not 2 arguments
+        if (args.length != ARG_CNT) {
+            if (args.length != 1){
+                // If there is not 1 argument either, exit
+                System.out.print("Usage: cmd ServerAddress ServerPort\n");
+                return;
+            } else {
+                // If there is 1 argument, that argument is host name and port number = 21
+                hostname = args[0];
+                portNumber = 21;
+            }
+        } else {
+            // If there are 2 arguments, first argument is host name and second is port number.
+            try {
+                hostname = args[0];
+                portNumber = Integer.parseInt(args[1]);
+            } catch (NumberFormatException e) {
+                // Ensures port number is an int
+                System.out.println("Usage: port number must be an integer");
+                return;
+            }
+        }
+
+        try {
+            ClientSocket = new Socket();
+            ClientSocket.connect(new InetSocketAddress(hostname, portNumber), 20000);
+            in = new BufferedReader(new InputStreamReader(ClientSocket.getInputStream()));
+            out = new PrintWriter(ClientSocket.getOutputStream(), true);
+        } catch (IOException e) {
+            System.out.println("0xFFFC Control connection to " + hostname + " on port " + portNumber + " failed to open");
+        }
+    }
 
     public static void main(String[] args) {
         byte cmdString[] = new byte[MAX_LEN];
@@ -19,10 +97,7 @@ public class CSftp {
         // If the arguments are invalid or there aren't enough of them
         // then exit.
 
-        if (args.length != ARG_CNT) {
-            System.out.print("Usage: cmd ServerAddress ServerPort\n");
-            return;
-        }
+        openConnection(args);
 
         try {
             for (int len = 1; len > 0; ) {
@@ -33,50 +108,35 @@ public class CSftp {
 
                 if (len > 1 && (char)cmdString[0] != '#'){
                     String[] commands = (new String(cmdString, 0, len)).trim().split("\\s+");
+                    String command = commands[0];
 
-                    if (commands[0].equals("user")){
+                    if (command.equals("user") || command.equals("pw") || command.equals("get")
+                            || command.equals("cd")){
                         if (commands.length != 2) System.out.println("0x002 Incorrect number of arguments");
                         else {
-                            System.out.println("Client username: " + commands[1]);
-                            // TODO: Send username to FTP server
+                            String param = commands[1];
+                            switch (command) {
+                                case "user": user(param);
+                                break;
+                                case "pw": pw(param);
+                                break;
+                                case "get": get(param);
+                                break;
+                                case "cd": cd(param);
+                                break;
+                            }
                         }
-                    } else if (commands[0].equals("pw")) {
-                        if (commands.length != 2) System.out.println("0x002 Incorrect number of arguments");
-                        else {
-                            System.out.println("Client password: " + commands[1]);
-                            // TODO: Send password to FTP server
-                        }
-                    } else if (commands[0].equals("quit")) {
+                    } else if (command.equals("quit") || command.equals("features") || command.equals("dir")){
                         if (commands.length != 1) System.out.println("0x002 Incorrect number of arguments");
                         else {
-                            System.out.println("Good bye.");
-                            // TODO: close established connection if connected
-                            break;
-                        }
-                    } else if (commands[0].equals("get")) {
-                        if (commands.length != 2) System.out.println("0x002 Incorrect number of arguments");
-                        else {
-                            System.out.println("Getting file: " + commands[1] + "...");
-                            // TODO: Establish a data connection, retrieve the file indicated by REMOTE, save it in a
-                            // file of the same name on the local machine.
-                        }
-                    } else if (commands[0].equals("features")) {
-                        if (commands.length != 1) System.out.println("0x002 Incorrect number of arguments");
-                        else {
-                            System.out.println("Retrieving features... ");
-                            // TODO: Request set of features/extensions supported by server, print it out
-                        }
-                    } else if (commands[0].equals("cd")) {
-                        if (commands.length != 2) System.out.println("0x002 Incorrect number of arguments");
-                        else {
-                            System.out.println("Changing cwd to: " + commands[1] + "...");
-                            // TODO: Change cwd on server to indicated directory
-                        }
-                    } else if (commands[0].equals("dir")) {
-                        if (commands.length != 1) System.out.println("0x002 Incorrect number of arguments");
-                        else {
-                            System.out.println("Retrieving files on cwd...");
-                            // TODO: Establish data connection, list files in cwd
+                            switch (command) {
+                                case "quit": quit();
+                                break;
+                                case "features": features();
+                                break;
+                                case "dir": dir();
+                                break;
+                            }
                         }
                     } else {
                         System.out.println("0x001 Invalid command");
