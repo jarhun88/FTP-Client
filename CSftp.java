@@ -69,6 +69,10 @@ public class CSftp {
         // TODO: implement
     }
 
+    private static void makeFile(String fileName) {
+
+    }
+
     /**
      * Changes the current working directory on the server to directory.
      * @param directory
@@ -155,6 +159,11 @@ public class CSftp {
             out.flush();
             String line = in.readLine();
             System.out.println("<-- " + line);
+
+            // Check if user is logged in
+            if (line.split(" ")[0].equals("530")) {
+                return;
+            }
 
             // Parse IP and port number of connection
             int startIndex = line.indexOf("(");
