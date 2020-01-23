@@ -1,6 +1,7 @@
 import java.net.*;
 import java.util.*;
 import java.io.*;
+import java.nio.channels.IllegalBlockingModeException;
 
 //
 // This is an implementation of a simplified version of a command 
@@ -11,32 +12,50 @@ import java.io.*;
 public class CSftp {
     static final int MAX_LEN = 255;
     static final int ARG_CNT = 2;
+
+    // Socket, reader, and writer for the control connection
     static Socket ClientSocket;
     static BufferedReader in;
     static PrintWriter out;
 
+    /**
+     * Sends the user's username to the FTP server.
+     * @param username
+     */
     public static void user(String username){
-        System.out.println("--> USER " + username);
-        out.print("USER " + username + "\r\n");
-        out.flush();
         try {
+            // Send/echo command to FTP server and print response
+            System.out.println("--> USER " + username);
+            out.print("USER " + username + "\r\n");
+            out.flush();
             System.out.println("<-- " + in.readLine());
         } catch (IOException e) {
+            // Error while attempting to read from/write to server, close connection
             System.out.println("0xFFFD: Control connection I/O error, closing control connection.");
             closeConnection();
+        } catch (Exception e) {
+            // Any other error occurs
+            System.out.println("0xFFFF: Processing error. " + e.getMessage());
         }
     }
 
+    /**
+     * Sends the user's password to the FTP server.
+     * @param password
+     */
     public static void pw(String password){
-        System.out.println("--> PASS " + password);
-        out.print("PASS " + password + "\r\n");
-        out.flush();
         try {
+            // Send/echo command to FTP server and print response
+            System.out.println("--> PASS " + password);
+            out.print("PASS " + password + "\r\n");
+            out.flush();
             System.out.println("<-- " + in.readLine());
         } catch (IOException e) {
+            // Error while attempting to read from/write to server, close connection
             System.out.println("0xFFFD: Control connection I/O error, closing control connection.");
             closeConnection();
         } catch (Error e) {
+            // Any other error occurs
             System.out.println("0xFFFF: Processing error. " + e.getMessage());
         }
     }
@@ -86,26 +105,156 @@ public class CSftp {
 
     }
 
+    private static void makeFile(String fileName) {
+
+    }
+
+    /**
+     * Changes the current working directory on the server to directory.
+     * @param directory
+     */
     public static void cd(String directory){
-        System.out.println("Switching to directory: " + directory + "...");
-        // TODO: implement
+        try {
+            // Send/echo command to FTP server and print response
+            System.out.println("--> CWD " + directory);
+            out.print("CWD " + directory + "\r\n");
+            out.flush();
+            System.out.println("<-- " + in.readLine());
+        } catch (IOException e) {
+            // Error while attempting to read from/write to server, close connection
+            System.out.println("0xFFFD: Control connection I/O error, closing control connection.");
+            closeConnection();
+        } catch (Exception e) {
+            // Any other error occurs
+            System.out.println("0xFFFF: Processing error. " + e.getMessage());
+        }
     }
 
+    /**
+     * If connected to the server, closes any established connection and exits the program.
+     */
     public static void quit(){
-        System.out.println("Good bye.");
-        // TODO: implement
+        try {
+            // Send/echo command to FTP server and print response.
+            System.out.println("--> QUIT");
+            out.print("QUIT\r\n");
+            out.flush();
+            System.out.println("<-- " + in.readLine());
+            // Exit command prompt mode
+            closeConnection();
+        } catch (IOException e) {
+            // Error while attempting to read from/write to server, close connection
+            System.out.println("0xFFFD: Control connection I/O error, closing control connection.");
+            closeConnection();
+        } catch (Exception e) {
+            // Any other error occurs
+            System.out.println("0xFFFF: Processing error. " + e.getMessage());
+        }
     }
 
+    /**
+     * Displays the set of features/extensions the server supports.
+     */
     public static void features(){
-        System.out.println("Loading features...");
-        // TODO: implement
+        try {
+            // Send/echo command to FTP server and print response.
+            System.out.println("--> FEAT");
+            out.print("FEAT\r\n");
+            out.flush();
+            String line = in.readLine();
+            System.out.println("<-- " + line);
+            while ((line = in.readLine()) != null){
+                // break if server says there are no more features
+                if (line.equals("211 End FEAT.")) {
+                    System.out.println("    " + line);
+                    break;
+                }
+                System.out.println("   " + line);
+            }
+        } catch (IOException e) {
+            // Error while attempting to read from/write to server, close connection
+            System.out.println("0xFFFD: Control connection I/O error, closing control connection.");
+            closeConnection();
+        } catch (Exception e) {
+            // Any other error occurs
+            System.out.println("0xFFFF: Processing error. " + e.getMessage());
+        }
     }
 
+    /**
+     * Establishes a data connection and retrieves a list of files in the current working directory on the server
+     */
     public static void dir(){
-        System.out.println("Retrieving file list...");
-        // TODO: implement
+        String IPAddress = "";
+        int portNumber = 0;
+
+        try {
+            // Create passive connection, Send/echo command to FTP server and print response.
+            System.out.println("--> PASV");
+            out.print("PASV\r\n");
+            out.flush();
+            String line = in.readLine();
+            System.out.println("<-- " + line);
+
+            // Check if user is logged in
+            if (line.split(" ")[0].equals("530")) {
+                return;
+            }
+
+            // Parse IP and port number of connection
+            int startIndex = line.indexOf("(");
+            int endIndex = line.indexOf(")");
+            String IPAndPort = line.substring(startIndex+1, endIndex);
+            StringTokenizer stringTokenizer = new StringTokenizer(IPAndPort, ",");
+            IPAddress = stringTokenizer.nextToken() + "." + stringTokenizer.nextToken() + "." +
+                    stringTokenizer.nextToken() + "." + stringTokenizer.nextToken();
+            portNumber = Integer.parseInt(stringTokenizer.nextToken())*256 +
+                    Integer.parseInt(stringTokenizer.nextToken());
+
+            // Create socket and input stream for data connection
+            Socket ClientSocketDataConnection = new Socket();
+            ClientSocketDataConnection.connect(new InetSocketAddress(IPAddress, portNumber), 10000);
+            BufferedReader inDataConnection = new BufferedReader(
+                    new InputStreamReader(ClientSocketDataConnection.getInputStream()));
+
+            try {
+                // Send/echo command to FTP server and print response.
+                System.out.println("--> LIST");
+                out.print("LIST\r\n");
+                out.flush();
+                System.out.println(in.readLine());
+                // Print server response
+                System.out.println("<-- " + inDataConnection.readLine());
+                // Print input from data connection
+                while ((line = inDataConnection.readLine()) != null){
+                    System.out.println("   " + line);
+                }
+                // Print server response
+                System.out.println("<-- " + in.readLine());
+            } catch (IOException e) {
+                // Error while attempting to read from/write to data transfer connection, close connection
+                System.out.println("0x3A7 Data transfer connection I/O error, closing data connection");
+            }
+
+            // Close data connection socket and reader
+            ClientSocketDataConnection.close();
+            inDataConnection.close();
+
+        } catch (IllegalBlockingModeException | IllegalArgumentException | IOException e) {
+            // Data connection cannot be established within 10 seconds or socket could not be created
+            System.out.println("0x3A2 Data transfer connection to " + IPAddress + " on port " +
+                    portNumber + " failed to open");
+        } catch (Exception e) {
+            // Any other error occurs
+            System.out.println("0xFFFF: Processing error. " + e.getMessage());
+        }
+
     }
 
+    /**
+     * parse host name and port number from user input and open a socket, reader, and writer to the host name and port.
+     * @param args
+     */
     public static void openConnection(String[] args) {
         String hostname = "";
         int portNumber = -1;
@@ -128,6 +277,7 @@ public class CSftp {
                 portNumber = Integer.parseInt(args[1]);
             }
 
+            // Open socket connection, reader, and writer
             ClientSocket = new Socket();
             ClientSocket.connect(new InetSocketAddress(hostname, portNumber), 20000);
             in = new BufferedReader(new InputStreamReader(ClientSocket.getInputStream()));
@@ -138,22 +288,38 @@ public class CSftp {
             // Ensures port number is an int
             System.out.println("Usage: port number must be an integer");
             System.exit(-1);
+        } catch (IllegalBlockingModeException | IllegalArgumentException | IOException e) {
+            // Control connection cannot be established within 20 seconds or socket could not be created, exit program
+            System.out.println("0xFFFC Control connection to " + hostname + " on port "
+                    + portNumber + " failed to open");
+            System.exit(1);
         } catch (Exception e) {
-            System.out.println("0xFFFC Control connection to " + hostname + " on port " + portNumber + " failed to open");
-            System.exit(-1);
+            // Any other error occurs
+            System.out.println("0xFFFF: Processing error. " + e.getMessage());
         }
     }
 
+    /**
+     * Close the client socket, reader, and writer and exit.
+     */
     private static void closeConnection() {
-        // TODO: implement this
+        try {
+            // Close control connection socket, reader, and writer
+            if (ClientSocket != null) ClientSocket.close();
+            if (in != null) in.close();
+            if (out != null) out.close();
+            // Exit program
+            System.exit(0);
+        } catch (IOException e) {
+            // Error occurs when trying to close connections
+            System.out.println("0xFFFF: Processing error. " + e.getMessage());
+        }
     }
 
     public static void main(String[] args) {
         byte cmdString[] = new byte[MAX_LEN];
 
-        // Get command line arguments and connected to FTP
-        // If the arguments are invalid or there aren't enough of them
-        // then exit.
+        // open control connection
         openConnection(args);
 
         try {
@@ -163,7 +329,9 @@ public class CSftp {
                 if (len <= 0)
                     break;
 
+                // If line is empty or does not start with "#", silently ignore
                 if (len > 1 && (char)cmdString[0] != '#'){
+                    // Parse command and any parameters, call appropriate helper function or print errors
                     String[] commands = (new String(cmdString, 0, len)).trim().split("\\s+");
                     String command = commands[0];
 
@@ -201,7 +369,9 @@ public class CSftp {
                 }
             }
         } catch (IOException exception) {
-            System.err.println("998 Input error while reading commands, terminating.");
+            // Exception is thrown while the client is reading its commands
+            System.err.println("0xFFFE Input error while reading commands, terminating.");
+            System.exit(1);
         }
     }
 }
