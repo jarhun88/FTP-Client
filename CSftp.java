@@ -85,7 +85,11 @@ public class CSftp {
             System.out.println("Usage: port number must be an integer");
             System.exit(-1);
         } catch (Exception e) {
+            e.printStackTrace();
             System.out.println("0xFFFC Control connection to " + hostname + " on port " + portNumber + " failed to open");
+            out.close();
+            in.close();
+            ClientSocket.close();
             System.exit(-1);
         }
     }
