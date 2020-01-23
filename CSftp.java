@@ -19,10 +19,10 @@ public class CSftp {
     static PrintWriter out;
 
     public static void user(String username){
-        System.out.println("--> USER " + username);
-        out.print("USER " + username + "\r\n");
-        out.flush();
         try {
+            System.out.println("--> USER " + username);
+            out.print("USER " + username + "\r\n");
+            out.flush();
             System.out.println("<-- " + in.readLine());
         } catch (IOException e) {
             System.out.println("0xFFFD: Control connection I/O error, closing control connection.");
@@ -33,10 +33,10 @@ public class CSftp {
     }
 
     public static void pw(String password){
-        System.out.println("--> PASS " + password);
-        out.print("PASS " + password + "\r\n");
-        out.flush();
         try {
+            System.out.println("--> PASS " + password);
+            out.print("PASS " + password + "\r\n");
+            out.flush();
             System.out.println("<-- " + in.readLine());
         } catch (IOException e) {
             System.out.println("0xFFFD: Control connection I/O error, closing control connection.");
@@ -52,8 +52,18 @@ public class CSftp {
     }
 
     public static void cd(String directory){
-        System.out.println("Switching to directory: " + directory + "...");
-        // TODO: implement
+        try {
+            System.out.println("--> CWD " + directory);
+            out.print("CWD " + directory + "\r\n");
+            out.flush();
+            String line = in.readLine();
+            System.out.println("<-- " + line);
+        } catch (IOException e) {
+            System.out.println("0xFFFD: Control connection I/O error, closing control connection.");
+            closeConnection();
+        } catch (Exception e) {
+            System.out.println("0xFFFF: Processing error. " + e.getMessage());
+        }
     }
 
     public static void quit(){
@@ -72,8 +82,25 @@ public class CSftp {
     }
 
     public static void features(){
-        System.out.println("Loading features...");
-        // TODO: implement
+        try {
+            System.out.println("--> FEAT");
+            out.print("FEAT\r\n");
+            out.flush();
+            String line = in.readLine();
+            System.out.println("<-- " + line);
+            while ((line = in.readLine()) != null){
+                if (line.equals("211 End FEAT.")) {
+                    System.out.println("    " + line);
+                    break;
+                }
+                System.out.println("   " + line);
+            }
+        } catch (IOException e) {
+            System.out.println("0xFFFD: Control connection I/O error, closing control connection.");
+            closeConnection();
+        } catch (Exception e) {
+            System.out.println("0xFFFF: Processing error. " + e.getMessage());
+        }
     }
 
     public static void dir(){
