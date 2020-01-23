@@ -19,13 +19,29 @@ public class CSftp {
     static PrintWriter out;
 
     public static void user(String username){
-        System.out.println("Client username: " + username);
-        // TODO: implement
+        System.out.println("--> USER " + username);
+        out.print("USER " + username + "\r\n");
+        out.flush();
+        try {
+            System.out.println("<-- " + in.readLine());
+        } catch (IOException e) {
+            System.out.println("0xFFFD: Control connection I/O error, closing control connection.");
+            closeConnection();
+        }
     }
 
     public static void pw(String password){
-        System.out.println("Client password: " + password);
-        // TODO: implement
+        System.out.println("--> PASS " + password);
+        out.print("PASS " + password + "\r\n");
+        out.flush();
+        try {
+            System.out.println("<-- " + in.readLine());
+        } catch (IOException e) {
+            System.out.println("0xFFFD: Control connection I/O error, closing control connection.");
+            closeConnection();
+        } catch (Error e) {
+            System.out.println("0xFFFF: Processing error. " + e.getMessage());
+        }
     }
 
     public static void get(String remote){
@@ -79,6 +95,7 @@ public class CSftp {
             ClientSocket.connect(new InetSocketAddress(hostname, portNumber), 20000);
             in = new BufferedReader(new InputStreamReader(ClientSocket.getInputStream()));
             out = new PrintWriter(ClientSocket.getOutputStream(), true);
+            System.out.println("<-- " + in.readLine());
 
         } catch (NumberFormatException e) {
             // Ensures port number is an int
@@ -88,6 +105,10 @@ public class CSftp {
             System.out.println("0xFFFC Control connection to " + hostname + " on port " + portNumber + " failed to open");
             System.exit(-1);
         }
+    }
+
+    private static void closeConnection() {
+        // TODO: implement this
     }
 
     public static void main(String[] args) {
