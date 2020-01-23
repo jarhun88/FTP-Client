@@ -53,7 +53,7 @@ public class CSftp {
         // TODO: implement
     }
 
-    public static void openConnection(String[] args) throws Exception {
+    public static void openConnection(String[] args) {
         String hostname = "";
         int portNumber = -1;
 
@@ -85,11 +85,7 @@ public class CSftp {
             System.out.println("Usage: port number must be an integer");
             System.exit(-1);
         } catch (Exception e) {
-            e.printStackTrace();
             System.out.println("0xFFFC Control connection to " + hostname + " on port " + portNumber + " failed to open");
-            out.close();
-            in.close();
-            ClientSocket.close();
             System.exit(-1);
         }
     }
@@ -100,11 +96,7 @@ public class CSftp {
         // Get command line arguments and connected to FTP
         // If the arguments are invalid or there aren't enough of them
         // then exit.
-        try {
-            openConnection(args);
-        } catch (Exception e) {
-            System.exit(1);
-        }
+        openConnection(args);
 
         try {
             for (int len = 1; len > 0; ) {
