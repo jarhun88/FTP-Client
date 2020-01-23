@@ -27,6 +27,8 @@ public class CSftp {
         } catch (IOException e) {
             System.out.println("0xFFFD: Control connection I/O error, closing control connection.");
             closeConnection();
+        } catch (Exception e) {
+            System.out.println("0xFFFF: Processing error. " + e.getMessage());
         }
     }
 
@@ -55,8 +57,18 @@ public class CSftp {
     }
 
     public static void quit(){
-        System.out.println("Good bye.");
-        // TODO: implement
+        try {
+            System.out.println("--> QUIT");
+            out.print("QUIT\r\n");
+            out.flush();
+            System.out.println("<-- " + in.readLine());
+            closeConnection();
+        } catch (IOException e) {
+            System.out.println("0xFFFD: Control connection I/O error, closing control connection.");
+            closeConnection();
+        } catch (Exception e) {
+            System.out.println("0xFFFF: Processing error. " + e.getMessage());
+        }
     }
 
     public static void features(){
@@ -108,7 +120,14 @@ public class CSftp {
     }
 
     private static void closeConnection() {
-        // TODO: implement this
+        try {
+            if (ClientSocket != null) ClientSocket.close();
+            if (in != null) in.close();
+            if (out != null) out.close();
+            System.exit(0);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public static void main(String[] args) {
