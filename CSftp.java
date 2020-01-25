@@ -2,6 +2,8 @@ import java.net.*;
 import java.util.*;
 import java.io.*;
 import java.nio.channels.IllegalBlockingModeException;
+import java.nio.file.*;
+
 
 //
 // This is an implementation of a simplified version of a command 
@@ -84,7 +86,7 @@ public class CSftp {
             String ip = response.split("\\.")[0] + "." + response.split("\\.")[1] + "." + response.split("\\.")[2] + "." + response.split("\\.")[3]; 
             Socket secondClientSocket = new Socket();
             secondClientSocket.connect(new InetSocketAddress(ip, port), 10000);
-            BufferedReader secondReader = new BufferedReader(new InputStreamReader(secondClientSocket.getInputStream()));
+            // BufferedReader secondReader = new BufferedReader(new InputStreamReader(secondClientSocket.getInputStream()));
             out.print("RETR " + remote + "\r\n");
             System.out.println("--> RETR " + remote);
             out.flush();
@@ -93,12 +95,9 @@ public class CSftp {
             
             try {
                 if (!response.split(" ")[0].equals("550"))  {
-
-                    Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(remote), "utf-8"));
-                    while ((response = secondReader.readLine()) != null) {
-                        writer.write(response);
-                    }   
-                    writer.close();
+                    InputStream socket = secondClientSocket.getInputStream();
+                    Path path = Paths.get(remote);
+                    Files.copy(socket, path, StandardCopyOption.REPLACE_EXISTING);
                     System.out.println("<-- " + in.readLine());
                 }
                 secondClientSocket.close();
