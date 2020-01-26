@@ -115,10 +115,6 @@ public class CSftp {
 
     }
 
-    private static void makeFile(String fileName) {
-
-    }
-
     /**
      * Changes the current working directory on the server to directory.
      * @param directory
