@@ -66,50 +66,69 @@ public class CSftp {
      * Downloads a file from the server.
      * @param remote
      */
-    public static void get(String remote){
+    public static void get(String remote) {
         // Send/echo command to FTP server and print response
-        System.out.println("--> PASV");
-        out.print("PASV" + "\r\n");
-        out.flush();
         try {
+            String ip = "";
+            int port = 0;
+            // Sending command to set server to data transfer (passive mode)
+            System.out.println("--> PASV");
+            out.print("PASV" + "\r\n");
+            out.flush();
+            // retrieve and parses passive mode ip
             String response = in.readLine();
             System.out.println("<-- " + response);
-            // Check if user is logged in
-            if (response.split(" ")[0].equals("530")) {
-                return;
-            }
-            // Switches file transfer mode to binary
-            out.print("TYPE I" + "\r\n");
-            System.out.println("--> TYPE I");
-            out.flush();
-            System.out.println("<-- " + in.readLine());  
+
             response = response.substring(response.indexOf("(") + 1);
             response = response.substring(0, response.indexOf(")"));
             response = response.replace(',', '.');
             int port1 = Integer.parseInt(response.split("\\.")[4]);
             int port2 = Integer.parseInt(response.split("\\.")[5]);
-            int port = port1 * 256 + port2;
-            String ip = response.split("\\.")[0] + "." + response.split("\\.")[1] + "." + response.split("\\.")[2] + "." + response.split("\\.")[3]; 
-            Socket secondClientSocket = new Socket();
-            secondClientSocket.connect(new InetSocketAddress(ip, port), 10000);
-            out.print("RETR " + remote + "\r\n");
-            System.out.println("--> RETR " + remote);
-            out.flush();
-            response = in.readLine();
-            System.out.println("<-- " + response);  
-            
+            port = port1 * 256 + port2;
+            ip = response.split("\\.")[0] + "." + response.split("\\.")[1] + "." + response.split("\\.")[2] + "." + response.split("\\.")[3]; 
+
             try {
-                if (!response.split(" ")[0].equals("550"))  {
-                    InputStream socket = secondClientSocket.getInputStream();
-                    Path path = Paths.get(remote);
-                    Files.copy(socket, path, StandardCopyOption.REPLACE_EXISTING);
-                    System.out.println("<-- " + in.readLine());
+                // Check if user is logged in
+                if (response.split(" ")[0].equals("530")) {
+                    return;
                 }
-                secondClientSocket.close();
-            } catch (IOException e) {
-                // Error while attempting to read from/write to data transfer connection, close connection
-                System.out.println("0x3A7 Data transfer connection I/O error, closing data connection");
-            }
+                // Switches file transfer mode to binary
+                out.print("TYPE I" + "\r\n");
+                out.flush();
+                System.out.println("--> TYPE I");
+                System.out.println("<-- " + in.readLine());  
+                // creates data connection with ip and port #
+                Socket secondClientSocket = new Socket();
+                secondClientSocket.connect(new InetSocketAddress(ip, port), 10000);
+                // Sending command to server to get specified file
+                out.print("RETR " + remote + "\r\n");
+                System.out.println("--> RETR " + remote);
+                out.flush();
+                response = in.readLine();
+                System.out.println("<-- " + response);  
+                try {
+                    // response is good and file transfer begins
+                    if (!response.split(" ")[0].equals("550"))  {
+                        InputStream socket = secondClientSocket.getInputStream();
+                        Path path = Paths.get(remote);
+                        Files.copy(socket, path);
+                        System.out.println("<-- " + in.readLine());
+                        secondClientSocket.close();
+                    }
+                } catch (FileSystemException e) {
+                    // Error while attempting to create/write new file
+                    System.out.println("0x38E Access to local file " + remote + " denied.");
+                    secondClientSocket.close();
+                } catch (IOException e) {
+                    // Error while attempting to read from/write to data transfer connection, close connection
+                    System.out.println("0x3A7 Data transfer connection I/O error, closing data connection");
+                    secondClientSocket.close();
+                }
+            } catch (IllegalBlockingModeException | IllegalArgumentException | IOException e) {
+            // Data connection cannot be established within 10 seconds or socket could not be created
+            System.out.println("0x3A2 Data transfer connection to " + ip + " on port " +
+                    port + " failed to open");
+            } 
         } catch (IOException e) {
             // Error while attempting to read from/write to server, close connection
             System.out.println("0xFFFD: Control connection I/O error, closing control connection.");
@@ -118,7 +137,6 @@ public class CSftp {
             // Any other error occurs
             System.out.println("0xFFFF: Processing error. " + e.getMessage());
         }
-
     }
 
     private static void makeFile(String fileName) {
