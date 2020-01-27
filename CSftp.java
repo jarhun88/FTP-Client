@@ -62,7 +62,12 @@ public class CSftp {
         }
     }
 
+    /**
+     * Downloads a file from the server.
+     * @param remote
+     */
     public static void get(String remote){
+        // Send/echo command to FTP server and print response
         System.out.println("--> PASV");
         out.print("PASV" + "\r\n");
         out.flush();
@@ -73,6 +78,7 @@ public class CSftp {
             if (response.split(" ")[0].equals("530")) {
                 return;
             }
+            // Switches file transfer mode to binary
             out.print("TYPE I" + "\r\n");
             System.out.println("--> TYPE I");
             out.flush();
@@ -86,7 +92,6 @@ public class CSftp {
             String ip = response.split("\\.")[0] + "." + response.split("\\.")[1] + "." + response.split("\\.")[2] + "." + response.split("\\.")[3]; 
             Socket secondClientSocket = new Socket();
             secondClientSocket.connect(new InetSocketAddress(ip, port), 10000);
-            // BufferedReader secondReader = new BufferedReader(new InputStreamReader(secondClientSocket.getInputStream()));
             out.print("RETR " + remote + "\r\n");
             System.out.println("--> RETR " + remote);
             out.flush();
@@ -105,11 +110,12 @@ public class CSftp {
                 // Error while attempting to read from/write to data transfer connection, close connection
                 System.out.println("0x3A7 Data transfer connection I/O error, closing data connection");
             }
-        
         } catch (IOException e) {
+            // Error while attempting to read from/write to server, close connection
             System.out.println("0xFFFD: Control connection I/O error, closing control connection.");
             closeConnection();
         } catch (Error e) {
+            // Any other error occurs
             System.out.println("0xFFFF: Processing error. " + e.getMessage());
         }
 
