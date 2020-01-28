@@ -4,12 +4,10 @@ import java.io.*;
 import java.nio.channels.IllegalBlockingModeException;
 import java.nio.file.*;
 
-
 //
 // This is an implementation of a simplified version of a command 
 // line ftp client. The program always takes two arguments
 //
-
 
 public class CSftp {
     static final int MAX_LEN = 255;
@@ -276,9 +274,6 @@ public class CSftp {
             // Any other error occurs
             System.err.println("0xFFFF: Processing error. " + e.getMessage() + ".");
         }
-
-
-
     }
 
     /**
