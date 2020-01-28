@@ -194,12 +194,9 @@ public class CSftp {
             String line = in.readLine();
             System.out.println("<-- " + line);
             while ((line = in.readLine()) != null){
+                System.out.println("<-- " + line);
                 // break if server says there are no more features
-                if (line.equals("211 End FEAT.")) {
-                    System.out.println("    " + line);
-                    break;
-                }
-                System.out.println("   " + line);
+                if (line.equals("211 End FEAT.")) break;
             }
         } catch (IOException e) {
             // Error while attempting to read from/write to server, close connection
@@ -226,55 +223,61 @@ public class CSftp {
             String line = in.readLine();
             System.out.println("<-- " + line);
 
-              
-
-            // Parse IP and port number of connection
-            int startIndex = line.indexOf("(");
-            int endIndex = line.indexOf(")");
-            String IPAndPort = line.substring(startIndex+1, endIndex);
-            StringTokenizer stringTokenizer = new StringTokenizer(IPAndPort, ",");
-            IPAddress = stringTokenizer.nextToken() + "." + stringTokenizer.nextToken() + "." +
-                    stringTokenizer.nextToken() + "." + stringTokenizer.nextToken();
-            portNumber = Integer.parseInt(stringTokenizer.nextToken())*256 +
-                    Integer.parseInt(stringTokenizer.nextToken());
-
-            // Create socket and input stream for data connection
-            Socket ClientSocketDataConnection = new Socket();
-            ClientSocketDataConnection.connect(new InetSocketAddress(IPAddress, portNumber), 10000);
-            BufferedReader inDataConnection = new BufferedReader(
-                    new InputStreamReader(ClientSocketDataConnection.getInputStream()));
-
             try {
-                // Send/echo command to FTP server and print response.
-                System.out.println("--> LIST");
-                out.print("LIST\r\n");
-                out.flush();
-                System.out.println(in.readLine());
-                // Print server response
-                System.out.println("<-- " + inDataConnection.readLine());
-                // Print input from data connection
-                while ((line = inDataConnection.readLine()) != null){
-                    System.out.println("   " + line);
+                // Parse IP and port number of connection
+                int startIndex = line.indexOf("(");
+                int endIndex = line.indexOf(")");
+                String IPAndPort = line.substring(startIndex+1, endIndex);
+                StringTokenizer stringTokenizer = new StringTokenizer(IPAndPort, ",");
+                IPAddress = stringTokenizer.nextToken() + "." + stringTokenizer.nextToken() + "." +
+                        stringTokenizer.nextToken() + "." + stringTokenizer.nextToken();
+                portNumber = Integer.parseInt(stringTokenizer.nextToken())*256 +
+                        Integer.parseInt(stringTokenizer.nextToken());
+
+                // Create socket and input stream for data connection
+                Socket ClientSocketDataConnection = new Socket();
+                ClientSocketDataConnection.connect(new InetSocketAddress(IPAddress, portNumber), 10000);
+                BufferedReader inDataConnection = new BufferedReader(
+                        new InputStreamReader(ClientSocketDataConnection.getInputStream()));
+
+                try {
+                    // Send/echo command to FTP server and print response.
+                    System.out.println("--> LIST");
+                    out.print("LIST\r\n");
+                    out.flush();
+                    // Print server response
+                    System.out.println("<-- " + in.readLine());
+
+                    // Print input from data connection
+                    while ((line = inDataConnection.readLine()) != null){
+                        System.out.println("   " + line);
+                    }
+
+                    // Print server response
+                    System.out.println("<-- " + in.readLine());
+                } catch (IOException e) {
+                    // Error while attempting to read from/write to data transfer connection, close connection
+                    System.err.println("0x3A7 Data transfer connection I/O error, closing data connection.");
                 }
-                // Print server response
-                System.out.println("<-- " + in.readLine());
-            } catch (IOException e) {
-                // Error while attempting to read from/write to data transfer connection, close connection
-                System.err.println("0x3A7 Data transfer connection I/O error, closing data connection.");
+
+                // Close data connection socket and reader
+                ClientSocketDataConnection.close();
+                inDataConnection.close();
+
+            } catch (IllegalBlockingModeException | IllegalArgumentException | IOException e) {
+                // Data connection cannot be established within 10 seconds or socket could not be created
+                System.err.println("0x3A2 Data transfer connection to " + IPAddress + " on port " +
+                        portNumber + " failed to open.");
             }
 
-            // Close data connection socket and reader
-            ClientSocketDataConnection.close();
-            inDataConnection.close();
-
-        } catch (IllegalBlockingModeException | IllegalArgumentException | IOException e) {
-            // Data connection cannot be established within 10 seconds or socket could not be created
-            System.err.println("0x3A2 Data transfer connection to " + IPAddress + " on port " +
-                    portNumber + " failed to open.");
+        } catch (IOException e) {
+            System.err.println("0xFFFD: Control connection I/O error, closing control connection.");
         } catch (Exception e) {
             // Any other error occurs
             System.err.println("0xFFFF: Processing error. " + e.getMessage() + ".");
         }
+
+
 
     }
 
