@@ -33,11 +33,11 @@ public class CSftp {
             System.out.println("<-- " + in.readLine());
         } catch (IOException e) {
             // Error while attempting to read from/write to server, close connection
-            System.out.println("0xFFFD: Control connection I/O error, closing control connection.");
+            System.err.println("0xFFFD: Control connection I/O error, closing control connection.");
             closeConnection();
         } catch (Exception e) {
             // Any other error occurs
-            System.out.println("0xFFFF: Processing error. " + e.getMessage());
+            System.err.println("0xFFFF: Processing error. " + e.getMessage());
         }
     }
 
@@ -54,11 +54,11 @@ public class CSftp {
             System.out.println("<-- " + in.readLine());
         } catch (IOException e) {
             // Error while attempting to read from/write to server, close connection
-            System.out.println("0xFFFD: Control connection I/O error, closing control connection.");
+            System.err.println("0xFFFD: Control connection I/O error, closing control connection.");
             closeConnection();
         } catch (Error e) {
             // Any other error occurs
-            System.out.println("0xFFFF: Processing error. " + e.getMessage());
+            System.err.println("0xFFFF: Processing error. " + e.getMessage());
         }
     }
 
@@ -117,25 +117,25 @@ public class CSftp {
                     }
                 } catch (FileSystemException e) {
                     // Error while attempting to create/write new file
-                    System.out.println("0x38E Access to local file " + remote + " denied.");
+                    System.err.println("0x38E Access to local file " + remote + " denied.");
                     secondClientSocket.close();
                 } catch (IOException e) {
                     // Error while attempting to read from/write to data transfer connection, close connection
-                    System.out.println("0x3A7 Data transfer connection I/O error, closing data connection");
+                    System.err.println("0x3A7 Data transfer connection I/O error, closing data connection");
                     secondClientSocket.close();
                 }
             } catch (IllegalBlockingModeException | IllegalArgumentException | IOException e) {
             // Data connection cannot be established within 10 seconds or socket could not be created
-            System.out.println("0x3A2 Data transfer connection to " + ip + " on port " +
+            System.err.println("0x3A2 Data transfer connection to " + ip + " on port " +
                     port + " failed to open");
             } 
         } catch (IOException e) {
             // Error while attempting to read from/write to server, close connection
-            System.out.println("0xFFFD: Control connection I/O error, closing control connection.");
+            System.err.println("0xFFFD: Control connection I/O error, closing control connection.");
             closeConnection();
         } catch (Error e) {
             // Any other error occurs
-            System.out.println("0xFFFF: Processing error. " + e.getMessage());
+            System.err.println("0xFFFF: Processing error. " + e.getMessage());
         }
     }
 
@@ -152,11 +152,11 @@ public class CSftp {
             System.out.println("<-- " + in.readLine());
         } catch (IOException e) {
             // Error while attempting to read from/write to server, close connection
-            System.out.println("0xFFFD: Control connection I/O error, closing control connection.");
+            System.err.println("0xFFFD: Control connection I/O error, closing control connection.");
             closeConnection();
         } catch (Exception e) {
             // Any other error occurs
-            System.out.println("0xFFFF: Processing error. " + e.getMessage());
+            System.err.println("0xFFFF: Processing error. " + e.getMessage());
         }
     }
 
@@ -174,11 +174,11 @@ public class CSftp {
             closeConnection();
         } catch (IOException e) {
             // Error while attempting to read from/write to server, close connection
-            System.out.println("0xFFFD: Control connection I/O error, closing control connection.");
+            System.err.println("0xFFFD: Control connection I/O error, closing control connection.");
             closeConnection();
         } catch (Exception e) {
             // Any other error occurs
-            System.out.println("0xFFFF: Processing error. " + e.getMessage());
+            System.err.println("0xFFFF: Processing error. " + e.getMessage());
         }
     }
 
@@ -203,11 +203,11 @@ public class CSftp {
             }
         } catch (IOException e) {
             // Error while attempting to read from/write to server, close connection
-            System.out.println("0xFFFD: Control connection I/O error, closing control connection.");
+            System.err.println("0xFFFD: Control connection I/O error, closing control connection.");
             closeConnection();
         } catch (Exception e) {
             // Any other error occurs
-            System.out.println("0xFFFF: Processing error. " + e.getMessage());
+            System.err.println("0xFFFF: Processing error. " + e.getMessage());
         }
     }
 
@@ -260,7 +260,7 @@ public class CSftp {
                 System.out.println("<-- " + in.readLine());
             } catch (IOException e) {
                 // Error while attempting to read from/write to data transfer connection, close connection
-                System.out.println("0x3A7 Data transfer connection I/O error, closing data connection");
+                System.err.println("0x3A7 Data transfer connection I/O error, closing data connection");
             }
 
             // Close data connection socket and reader
@@ -269,11 +269,11 @@ public class CSftp {
 
         } catch (IllegalBlockingModeException | IllegalArgumentException | IOException e) {
             // Data connection cannot be established within 10 seconds or socket could not be created
-            System.out.println("0x3A2 Data transfer connection to " + IPAddress + " on port " +
+            System.err.println("0x3A2 Data transfer connection to " + IPAddress + " on port " +
                     portNumber + " failed to open");
         } catch (Exception e) {
             // Any other error occurs
-            System.out.println("0xFFFF: Processing error. " + e.getMessage());
+            System.err.println("0xFFFF: Processing error. " + e.getMessage());
         }
 
     }
@@ -313,16 +313,16 @@ public class CSftp {
 
         } catch (NumberFormatException e) {
             // Ensures port number is an int
-            System.out.println("Usage: port number must be an integer");
+            System.err.println("Usage: port number must be an integer");
             System.exit(-1);
         } catch (IllegalBlockingModeException | IllegalArgumentException | IOException e) {
             // Control connection cannot be established within 20 seconds or socket could not be created, exit program
-            System.out.println("0xFFFC Control connection to " + hostname + " on port "
+            System.err.println("0xFFFC Control connection to " + hostname + " on port "
                     + portNumber + " failed to open");
             System.exit(1);
         } catch (Exception e) {
             // Any other error occurs
-            System.out.println("0xFFFF: Processing error. " + e.getMessage());
+            System.err.println("0xFFFF: Processing error. " + e.getMessage());
         }
     }
 
@@ -339,7 +339,7 @@ public class CSftp {
             System.exit(0);
         } catch (IOException e) {
             // Error occurs when trying to close connections
-            System.out.println("0xFFFF: Processing error. " + e.getMessage());
+            System.err.println("0xFFFF: Processing error. " + e.getMessage());
         }
     }
 
@@ -364,7 +364,7 @@ public class CSftp {
 
                     if (command.equals("user") || command.equals("pw") || command.equals("get")
                             || command.equals("cd")){
-                        if (commands.length != 2) System.out.println("0x002 Incorrect number of arguments");
+                        if (commands.length != 2) System.err.println("0x002 Incorrect number of arguments");
                         else {
                             String param = commands[1];
                             switch (command) {
@@ -379,7 +379,7 @@ public class CSftp {
                             }
                         }
                     } else if (command.equals("quit") || command.equals("features") || command.equals("dir")){
-                        if (commands.length != 1) System.out.println("0x002 Incorrect number of arguments");
+                        if (commands.length != 1) System.err.println("0x002 Incorrect number of arguments");
                         else {
                             switch (command) {
                                 case "quit": quit();
@@ -391,7 +391,7 @@ public class CSftp {
                             }
                         }
                     } else {
-                        System.out.println("0x001 Invalid command");
+                        System.err.println("0x001 Invalid command");
                     }
                 }
             }
