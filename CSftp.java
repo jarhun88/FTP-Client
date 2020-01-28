@@ -194,7 +194,7 @@ public class CSftp {
             while ((line = in.readLine()) != null){
                 System.out.println("<-- " + line);
                 // break if server says there are no more features
-                if (line.equals("211 End FEAT.")) break;
+                if (line.split(" ")[0].equals("211")) break;
             }
         } catch (IOException e) {
             // Error while attempting to read from/write to server, close connection
