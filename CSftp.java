@@ -240,8 +240,8 @@ public class CSftp {
 
                 try {
                     // Send/echo command to FTP server and print response.
-                    System.out.println("--> LIST");
-                    out.print("LIST\r\n");
+                    System.out.println("--> NLST");
+                    out.print("NLST\r\n");
                     out.flush();
                     // Print server response
                     System.out.println("<-- " + in.readLine());

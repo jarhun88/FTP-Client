@@ -7,6 +7,9 @@ CSftp.jar: CSftp.java
 run: CSftp.jar  
 	java -jar CSftp.jar ftp.cs.ubc.ca  21
 
+run1: CSftp.jar
+	java -jar CSftp.jar localhost 1033
+
 clean:
 	rm -f *.class
 	rm -f CSftp.jar
